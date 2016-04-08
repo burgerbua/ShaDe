@@ -54,7 +54,7 @@ namespace shade {
     template <size_t DEPTH>
     class ztree
     {
-        const static size_t DIM = 1 << DEPTH;
+        const static uint32_t MASK = (1 << DEPTH) - 1;
         
         const std::vector<point_type>& pts;
         
@@ -73,9 +73,9 @@ namespace shade {
             T0 &= mask;
             T1 &= mask;
             T2 &= mask;
-            const double t0 = static_cast<double>(T0) / static_cast<double>(DIM-1);
-            const double t1 = static_cast<double>(T1) / static_cast<double>(DIM-1);
-            const double t2 = static_cast<double>(T2) / static_cast<double>(DIM-1);
+            const double t0 = static_cast<double>(T0) / static_cast<double>(MASK);
+            const double t1 = static_cast<double>(T1) / static_cast<double>(MASK);
+            const double t2 = static_cast<double>(T2) / static_cast<double>(MASK);
             const point_type l = {{
                 width*t0 + center[0] - width/2.0,
                 width*t1 + center[1] - width/2.0,
@@ -142,11 +142,11 @@ namespace shade {
             for (size_t i = 0; i < npts; ++i) {
                 const point_type& pt = pts.at(i);
                 const double t0 = pt[0] / width - fac[0];
-                const uint32_t T0 = static_cast<uint32_t>(std::floor(t0 * (DIM-1)));
+                const uint32_t T0 = static_cast<uint32_t>(std::floor(t0 * MASK));
                 const double t1 = pt[1] / width - fac[1];
-                const uint32_t T1 = static_cast<uint32_t>(std::floor(t1 * (DIM-1)));
+                const uint32_t T1 = static_cast<uint32_t>(std::floor(t1 * MASK));
                 const double t2 = pt[2] / width - fac[2];
-                const uint32_t T2 = static_cast<uint32_t>(std::floor(t2 * (DIM-1)));
+                const uint32_t T2 = static_cast<uint32_t>(std::floor(t2 * MASK));
                 zpts.push_back(std::make_pair(enc(T0, T1, T2), i));
             }
             
