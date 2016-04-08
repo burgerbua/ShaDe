@@ -12,7 +12,7 @@
 namespace shade {
     
     struct Canonic {
-        virtual bool clashing(const point_type& l, const double dim) const = 0;
+        virtual bool clashing(const point_type& l, const double width) const = 0;
     };
     
     class Sphere : public Canonic {
@@ -21,13 +21,13 @@ namespace shade {
     public:
         Sphere(const point_type& _center, const double _radius)
         : center(_center), radius_sq(_radius*_radius) {}
-        bool clashing(const point_type& l, const double dim) const {
+        bool clashing(const point_type& l, const double width) const {
             double min_dist_sq = 0.0;
             double max_dist_sq = 0.0;
             for (int i=0; i<3; ++i) {
                 const double ci = center[i];
                 const double li = l[i];
-                const double hi = li + dim;
+                const double hi = li + width;
                 if (ci<li) {
                     const double min = ci - li;
                     min_dist_sq += min * min;
@@ -57,16 +57,16 @@ namespace shade {
     public:
         Plane(const point_type& _root, const point_type& _normal)
         : root(_root), normal(normalize(_normal)) {}
-        bool clashing(const point_type& l, const double dim) const {
+        bool clashing(const point_type& l, const double width) const {
             const point_type vecl(l - root);
             const double dotl = dot(normal, vecl);
-            if (fabs(dotl)>3.0*dim*dim) {
+            if (fabs(dotl)>3.0*width*width) {
                 return false;
             }
             const point_type h = {{
-                normal[0]*vecl[0]>0.0 ? 0.0 : dim,
-                normal[1]*vecl[1]>0.0 ? 0.0 : dim,
-                normal[2]*vecl[2]>0.0 ? 0.0 : dim}};
+                normal[0]*vecl[0]>0.0 ? 0.0 : width,
+                normal[1]*vecl[1]>0.0 ? 0.0 : width,
+                normal[2]*vecl[2]>0.0 ? 0.0 : width}};
             const point_type vech(l + h - root);
             const double doth = dot(normal, vech);
             return dotl*doth<0.0;
@@ -80,20 +80,20 @@ namespace shade {
     public:
         Cylinder(const point_type& _root, const point_type& _axis, const double _radius)
         : root(_root), axis(normalize(_axis)), radius(_radius) {}
-        bool clashing(const point_type& l, const double dim) const {
+        bool clashing(const point_type& l, const double width) const {
             const point_type vecl(l - root);
             const point_type crossl = cross(axis, vecl);
             const double distl = norm(crossl);
-            const double diam = sqrt(3.0) * dim;
+            const double diam = sqrt(3.0) * width;
             if (distl+diam < radius || distl-diam > radius) {
                 return false;
             }
             const double diffl = distl-radius;
             for (int i=1; i<8; ++i) {
                 const point_type h = {{
-                    l[0] + (i&1 ? dim : 0.0),
-                    l[1] + (i&2 ? dim : 0.0),
-                    l[2] + (i&4 ? dim : 0.0)}};
+                    l[0] + (i&1 ? width : 0.0),
+                    l[1] + (i&2 ? width : 0.0),
+                    l[2] + (i&4 ? width : 0.0)}};
                 const point_type vech(h - root);
                 const double disth = norm(cross(axis, vech));
                 const double diffh = disth-radius;
@@ -112,10 +112,10 @@ namespace shade {
     public:
         Torus(const point_type& _root, const point_type& _axis, const double _radius0, const double _radius1)
         : root(_root), axis(normalize(_axis)), radius0(_radius0), radius1(_radius1) {}
-        bool clashing(const point_type& l, const double dim) const {
+        bool clashing(const point_type& l, const double width) const {
             const point_type veclr(l - root);
             const double distlr = norm(veclr);
-            const double diam = sqrt(3.0) * dim;
+            const double diam = sqrt(3.0) * width;
             if (distlr+diam < radius0-radius1 || distlr-diam > radius0+radius1) {
                 return false;
             }
@@ -134,9 +134,9 @@ namespace shade {
             const double diffl = distl-radius1;
             for (int i=1; i<8; ++i) {
                 const point_type h = {{
-                    l[0] + (i&1 ? dim : 0.0),
-                    l[1] + (i&2 ? dim : 0.0),
-                    l[2] + (i&4 ? dim : 0.0)}};
+                    l[0] + (i&1 ? width : 0.0),
+                    l[1] + (i&2 ? width : 0.0),
+                    l[2] + (i&4 ? width : 0.0)}};
                 const point_type vechr(h - root);
                 const point_type crossh = cross(axis, vechr);
                 const point_type dirh = normalize(cross(crossh, axis));
