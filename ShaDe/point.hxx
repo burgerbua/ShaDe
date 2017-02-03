@@ -19,6 +19,9 @@ namespace shade {
     inline point_type operator+(const point_type& l, const point_type& r) {
         return {{l[0]+r[0], l[1]+r[1], l[2]+r[2]}};
     }
+    inline point_type operator*(const point_type& l, const double val) {
+        return {{l[0]*val, l[1]*val, l[2]*val}};
+    }
     inline double dot(const point_type& l, const point_type& r) {
         return l[0]*r[0] + l[1]*r[1] + l[2]*r[2];
     }

@@ -9,19 +9,25 @@
 #ifndef canonic_h
 #define canonic_h
 
+#include "ransac.hxx"
+
 namespace shade {
     
     struct Canonic {
         virtual bool clashing(const point_type& l, const double width) const = 0;
     };
     
-    class Sphere : public Canonic {
+    class Sphere : public Canonic, public Model<point_type, 4> {
         const point_type center;
-        const double radius_sq;
+        const double radius, radius_sq;
+        double compute_distance_measure(const point_type& p) const override {
+            const double cdist = norm(p-center);
+            return fabs(radius-cdist);
+        }
     public:
         Sphere(const point_type& _center, const double _radius)
-        : center(_center), radius_sq(_radius*_radius) {}
-        bool clashing(const point_type& l, const double width) const {
+        : center(_center), radius(_radius), radius_sq(_radius*_radius) {}
+        bool clashing(const point_type& l, const double width) const override {
             double min_dist_sq = 0.0;
             double max_dist_sq = 0.0;
             for (int i=0; i<3; ++i) {
@@ -51,13 +57,17 @@ namespace shade {
         }
     };
     
-    class Plane : public Canonic {
+    class Plane : public Canonic, public Model<point_type, 3>{
         const point_type root;
         const point_type normal;
+        double compute_distance_measure(const point_type& p) const override {
+            const point_type vec(p-root);
+            return dot(normal, vec);
+        }
     public:
         Plane(const point_type& _root, const point_type& _normal)
         : root(_root), normal(normalize(_normal)) {}
-        bool clashing(const point_type& l, const double width) const {
+        bool clashing(const point_type& l, const double width) const override {
             const point_type vecl(l - root);
             const double dotl = dot(normal, vecl);
             if (fabs(dotl)>3.0*width*width) {
@@ -73,14 +83,21 @@ namespace shade {
         }
     };
 
-    class Cylinder : public Canonic {
+    class Cylinder : public Canonic, public Model<point_type, 4> {
         const point_type root;
         const point_type axis;
         const double radius;
+        double compute_distance_measure(const point_type& p) const override {
+            const point_type vec(p-root);
+            const point_type dir(axis * dot(axis, vec));
+            const point_type center(root + dir);
+            const double cdist(norm(p-center));
+            return fabs(radius-cdist);
+        }
     public:
         Cylinder(const point_type& _root, const point_type& _axis, const double _radius)
         : root(_root), axis(normalize(_axis)), radius(_radius) {}
-        bool clashing(const point_type& l, const double width) const {
+        bool clashing(const point_type& l, const double width) const override {
             const point_type vecl(l - root);
             const point_type crossl = cross(axis, vecl);
             const double distl = norm(crossl);
@@ -105,14 +122,20 @@ namespace shade {
         }
     };
 
-    class Torus : public Canonic {
+    class Torus : public Canonic, public Model<point_type, 4> {
         const point_type root;
         const point_type axis;
         const double radius0, radius1;
+        double compute_distance_measure(const point_type& p) const override {
+            const point_type vec(p-root);
+            const point_type pos = cross(axis, normalize(cross(vec, axis))) * radius0;
+            const double pdist(norm(p-pos));
+            return fabs(pdist);
+        }
     public:
         Torus(const point_type& _root, const point_type& _axis, const double _radius0, const double _radius1)
         : root(_root), axis(normalize(_axis)), radius0(_radius0), radius1(_radius1) {}
-        bool clashing(const point_type& l, const double width) const {
+        bool clashing(const point_type& l, const double width) const override {
             const point_type veclr(l - root);
             const double distlr = norm(veclr);
             const double diam = sqrt(3.0) * width;

@@ -52,6 +52,13 @@ void read_OBJ(const std::string& filename, std::vector<shade::point_type>& pts) 
         }
     }
 }
+void write_to_file(const std::vector<shade::point_type>& pts, std::string filename) {
+    std::ofstream of(filename, std::ofstream::out);
+    for (auto it = pts.begin(); it!=pts.end(); ++it) {
+        of << (*it)[0] << " " << (*it)[1] << " " << (*it)[2] << std::endl;
+    }
+    of.close();
+}
 
 int main(const int argc, const char * argv[])
 {
@@ -59,9 +66,12 @@ int main(const int argc, const char * argv[])
     
 //    read_SIMPLE(pts);
     
-    std::string filename("/Users/matthias/Documents/STL/OBJ_Kongming_Wooden_Lock.obj");
-    read_OBJ(filename, pts);
-        
+    std::string ifilename("/Users/matthias/Documents/STL/OBJ_Kongming_Wooden_Lock.obj");
+    read_OBJ(ifilename, pts);
+
+    std::string ofilename("/Users/matthias/Documents/STL/OBJ_Kongming_Wooden_Lock.txt");
+    write_to_file(pts, ofilename);
+
     const size_t DEPTH = 5;
     shade::ztree<DEPTH> t(pts);
     
