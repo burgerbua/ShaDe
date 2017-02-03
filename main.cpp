@@ -205,17 +205,17 @@ int main(const int argc, const char * argv[])
 	tr.get_clashing_pts(&sph, sph_pts0);
 	tr.get_clashing_pts_greedy(&sph, sph_pts1);
 
-	//test_canonics(tr, pln, avg, max, min, cntr, directory); // ok
-	tr.get_clashing_pts(&pln, pln_pts0);
-	tr.get_clashing_pts_greedy(&pln, pln_pts1);
+	////test_canonics(tr, pln, avg, max, min, cntr, directory); // ok
+	//tr.get_clashing_pts(&pln, pln_pts0);
+	//tr.get_clashing_pts_greedy(&pln, pln_pts1);
 
-	//test_canonics(tr, cyl, avg, max, min, cntr, directory); // ok
-	tr.get_clashing_pts(&cyl, cyl_pts0);
-	tr.get_clashing_pts_greedy(&cyl, cyl_pts1);
+	////test_canonics(tr, cyl, avg, max, min, cntr, directory); // ok
+	//tr.get_clashing_pts(&cyl, cyl_pts0);
+	//tr.get_clashing_pts_greedy(&cyl, cyl_pts1);
 
-	//test_canonics(tr, tor, avg, max, min, cntr, directory); // ok
-	tr.get_clashing_pts(&tor, tor_pts0);
-	tr.get_clashing_pts_greedy(&tor, tor_pts1);
+	////test_canonics(tr, tor, avg, max, min, cntr, directory); // ok
+	//tr.get_clashing_pts(&tor, tor_pts0);
+	//tr.get_clashing_pts_greedy(&tor, tor_pts1);
 
 	return 0;
 }
