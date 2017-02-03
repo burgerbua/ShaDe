@@ -1,3 +1,5 @@
 cmake_minimum_required (VERSION 2.8.11)
 project (ShaDe)
+source_group("sources" REGULAR_EXPRESSION "${CMAKE_SOURCE_DIR}/sources/*")
+include_directories(${CMAKE_SOURCE_DIR}/sources/)
 add_executable (shade_test main.cpp)
