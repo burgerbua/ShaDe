@@ -12,7 +12,7 @@
 #include <sstream>
 #include <string>
 
-#include "ztree.hpp"
+#include "ztree.hxx"
 
 void read_SIMPLE(std::vector<shade::point_type>& pts) {
     shade::point_type x0 = {-1.0, -1.0, -1.0};
