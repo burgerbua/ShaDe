@@ -139,23 +139,19 @@ namespace shade {
             typedef std::pair<uint32_t, size_t> zpt;
             const size_t npts = pts.size();
             std::vector<zpt> zpts; zpts.reserve(npts);
-            for (size_t i = 0; i < npts; ++i) {
-                const point_type& pt = pts.at(i);
+            
+            size_t idx = 0;
+            for (auto pt : pts) {
                 const double t0 = pt[0] / width - fac[0];
                 const uint32_t T0 = static_cast<uint32_t>(std::floor(t0 * MASK));
                 const double t1 = pt[1] / width - fac[1];
                 const uint32_t T1 = static_cast<uint32_t>(std::floor(t1 * MASK));
                 const double t2 = pt[2] / width - fac[2];
                 const uint32_t T2 = static_cast<uint32_t>(std::floor(t2 * MASK));
-                zpts.push_back(std::make_pair(enc(T0, T1, T2), i));
+                zpts.emplace_back(enc(T0, T1, T2), idx++);
             }
             
-            struct zcomp {
-                bool operator()(const zpt& l, const zpt& r) const {
-                    return l.first < r.first;
-                }
-            };
-            std::sort(zpts.begin(), zpts.end(), zcomp());
+            std::sort(zpts.begin(), zpts.end(), [](const zpt& l, const zpt& r){return l.first < r.first;});
             
             uint32_t cell = 0;
             for (auto it = zpts.cbegin(); it != zpts.cend(); ++it) {
