@@ -14,4 +14,6 @@ include_directories(${CMAKE_SOURCE_DIR}/headers/ ${EIGEN3_INCLUDE_DIR})
 file (GLOB headers "${CMAKE_SOURCE_DIR}/headers/*.hxx")
 source_group ("Headers" FILES ${headers})
 
-add_executable (shade_test ${CMAKE_SOURCE_DIR}/tests/main.cpp ${headers})
+add_executable (shade_test MACOSX_BUNDLE ${CMAKE_SOURCE_DIR}/tests/main.cpp ${headers})
+
+target_link_libraries(shade_test ${VTK_LIBRARIES})

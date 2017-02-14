@@ -109,8 +109,8 @@ namespace shade {
         ztree(const std::vector<point_type>& _pts)
         : pts(_pts) {
             const double dbl_max = std::numeric_limits<double>::max();
-            point_type lo = { dbl_max,  dbl_max,  dbl_max};
-            point_type hi = {-dbl_max, -dbl_max, -dbl_max};
+            point_type lo = {{ dbl_max,  dbl_max,  dbl_max}};
+            point_type hi = {{-dbl_max, -dbl_max, -dbl_max}};
             for (auto it = pts.cbegin(); it != pts.end(); ++it) {
                 const point_type& pt = *it;
                 if (pt[0]<lo[0]) lo[0] = pt[0];
