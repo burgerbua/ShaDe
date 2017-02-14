@@ -8,17 +8,11 @@
 
 #include <string>
 
-#include "ztree.hxx"
-
 #include <vtkOBJReader.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkActor.h>
-#include <vtkRenderer.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
-
 #include <vtkSmartPointer.h>
 template <typename T> using vtkptr = vtkSmartPointer<T>;
+
+#include "ztree.hxx"
 
 int main(const int argc, const char * argv[])
 {
