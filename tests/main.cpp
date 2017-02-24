@@ -13,6 +13,7 @@
 template <typename T> using vtkptr = vtkSmartPointer<T>;
 
 #include "ztree.hxx"
+#include "ransac.hxx"
 
 int main(const int argc, const char * argv[])
 {
@@ -38,7 +39,17 @@ int main(const int argc, const char * argv[])
     
     // build tree
     const size_t DEPTH = 5;
-    shade::ztree<DEPTH> t(pts);
+    using tree_type = shade::ztree<DEPTH>;
+    tree_type t(pts);
+    
+    // plane model
+    std::array<shade::point_type, shade::Plane::num_pts> rpts;
+    t.get_random_points(rpts);
+    shade::Plane p(rpts);
+    
+    // find points on model
+    std::vector<tree_type::pt_id_type> pt_ids;
+    t.clashing_with(p, pt_ids);
     
     return 0;
 }

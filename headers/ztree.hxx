@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <map>
 #include <list>
+#include <set>
 #include <vector>
 #include <algorithm>
 #include <cassert>
@@ -62,11 +63,11 @@ namespace shade {
         double width;
         
         typedef std::list<size_t> mapped_type;
-        typedef std::map<uint32_t, mapped_type::iterator> bst_type;
+        typedef std::map<uint32_t, mapped_type::const_iterator> bst_type;
         mapped_type spts;
         bst_type bst;
         
-        void clashing_with(const Canonic& c, const bst_type::iterator nl, const bst_type::iterator nh, const size_t level, std::vector<bst_type::iterator>& nodes) const {
+        void clashing_with(const Canonic& c, const bst_type::const_iterator nl, const bst_type::const_iterator nh, const size_t level, std::vector<bst_type::const_iterator>& nodes) const {
             uint32_t T0, T1, T2;
             dec(nl->first, T0, T1, T2);
             const uint32_t mask = 0xffffffff<<(DEPTH-level);
@@ -93,19 +94,59 @@ namespace shade {
                         const uint32_t T1l = o&2 ? T1|C : T1;
                         const uint32_t T2l = o&4 ? T2|C : T2;
                         const uint32_t Ml = enc(T0l, T1l, T2l);
-                        bst_type::iterator nlc = std::lower_bound(nl, nh, Ml);
+                        auto nlc = std::lower_bound(nl, nh, Ml, [](const bst_type::value_type& n, const uint32_t& _Ml){return n.first<_Ml;});
                         const uint32_t T0h = T0l|C;
                         const uint32_t T1h = T1l|C;
                         const uint32_t T2h = T2l|C;
                         const uint32_t Mh = enc(T0h, T1h, T2h);
-                        bst_type::iterator nhc = std::upper_bound(nl, nh, Mh);
+                        auto nhc = std::upper_bound(nl, nh, Mh, [](const uint32_t& _Mh, const bst_type::value_type& n){return _Mh<n.first;});
                         clashing_with(c, nlc, nhc, clevel, nodes);
                     }
                 }
             }
         }
+//        void clashing_with_greedy(const Canonic& c, std::vector<bst_type::iterator>& nodes) const {
+//            for (auto it: bst) {
+//                double x, y, z;
+//                dec(it->first, x, y, z);
+//                if (c.clashing({{x, y, z}}, width)) {
+//                    nodes.push_back(it);
+//                }
+//            }
+//        }
+//        void clashing_with(const Canonic& c, std::vector<bst_type::iterator>& nodes) const {
+//            const size_t level = 0;
+//            clashing_with(c, bst.begin(), bst.end(), level, nodes);
+//        }
+        
+        uint32_t g2l(const point_type& pt) const
+        {
+            const double t0 = (pt[0] - center[0]) / width + 0.5;
+            const uint32_t T0 = static_cast<uint32_t>(std::floor(t0 * MASK));
+            const double t1 = (pt[1] - center[1]) / width + 0.5;
+            const uint32_t T1 = static_cast<uint32_t>(std::floor(t1 * MASK));
+            const double t2 = (pt[2] - center[2]) / width + 0.5;
+            const uint32_t T2 = static_cast<uint32_t>(std::floor(t2 * MASK));
+            const uint32_t m = enc(T0, T1, T2);
+            return m;
+        }
+        point_type l2g(const uint32_t m) const
+        {
+            uint32_t T0, T1, T2;
+            dec(m, T0, T1, T2);
+            const double t0 = static_cast<double>(T0) / static_cast<double>(MASK);
+            const double t1 = static_cast<double>(T1) / static_cast<double>(MASK);
+            const double t2 = static_cast<double>(T2) / static_cast<double>(MASK);
+            const point_type g = {{
+                width*t0 + center[0] - width/2.0,
+                width*t1 + center[1] - width/2.0,
+                width*t2 + center[2] - width/2.0}};
+            return g;
+        }
         
     public:
+        using pt_id_type = mapped_type::value_type;
+        
         ztree(const std::vector<point_type>& _pts)
         : pts(_pts) {
             const double dbl_max = std::numeric_limits<double>::max();
@@ -162,18 +203,59 @@ namespace shade {
                 }
             }
         }
-        void clashing_with_greedy(const Canonic& c, std::vector<bst_type::iterator>& nodes) const {
-            for (auto it: bst) {
-                double x, y, z;
-                dec(it->first, x, y, z);
-                if (c.clashing({{x, y, z}}, width)) {
-                    nodes.push_back(it);
+
+        template <size_t num_pts>
+        void get_random_points(std::array<point_type, num_pts>& rpts) const
+        {
+            // get random leaf node
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_int_distribution<size_t> disn(0, pts.size()-1);
+            const size_t id = disn(gen);
+            const uint32_t rm = g2l(pts.at(id));
+            auto cn = std::prev(std::lower_bound(std::begin(bst), std::end(bst), rm, [](const bst_type::value_type& n, const uint32_t& _rm){return n.first<_rm;}));
+
+            // point counter
+            size_t cntr = 0;
+            
+            // find random points in random leaf
+            std::set<size_t> ids;
+            auto nn = std::next(cn);
+            auto end = (nn==std::end(bst)) ? std::end(spts) : nn->second;
+            const size_t size = std::distance(cn->second, end);
+            std::uniform_int_distribution<size_t> disp(0, size-1);
+            while (ids.size()<size) {
+                // use points only once
+                const size_t id = disp(gen);
+                if (ids.insert(id).second == false)
+                    continue;
+                auto pt = cn->second;
+                std::advance(pt, id);
+                rpts[cntr++] = pts.at(*pt);
+                // return if enough points found
+                if (cntr == num_pts)
+                    return;
+            }
+
+            // not enough points found, retry
+            get_random_points(rpts);
+        }
+        
+        void clashing_with(const Canonic& c, std::vector<mapped_type::value_type>& pt_ids) const {
+            // find all nodes clashing with c
+            std::vector<bst_type::const_iterator> nodes;
+            const size_t level = 0;
+            bst_type::const_iterator nl = bst.begin();
+            bst_type::const_iterator nh = bst.end();
+            clashing_with(c, nl, nh, level, nodes);
+            // get all point ids from clashing nodes
+            for (auto cn : nodes) {
+                auto nn = std::next(cn);
+                auto end = (nn==std::end(bst)) ? std::end(spts) : nn->second;
+                for (auto it = cn->second; it != end; ++it) {
+                    pt_ids.push_back(*it);
                 }
             }
-        }
-        void clashing_with(const Canonic& c, std::vector<bst_type::iterator>& nodes) const {
-            const size_t level = 0;
-            clashing_with(c, bst.begin(), bst.end(), level, nodes);
         }
 
     };

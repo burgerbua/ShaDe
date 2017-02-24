@@ -25,6 +25,8 @@ namespace shade {
             return fabs(radius-cdist);
         }
     public:
+        const static size_t num_pts = 4;
+
         Sphere(const point_type& _center, const double _radius)
         : center(_center), radius(_radius), radius_sq(_radius*_radius) {}
         bool clashing(const point_type& l, const double width) const override {
@@ -58,13 +60,21 @@ namespace shade {
     };
     
     class Plane : public Canonic, public Model<point_type, 3>{
-        const point_type root;
-        const point_type normal;
+        point_type root;
+        point_type normal;
         double compute_distance_measure(const point_type& p) const override {
             const point_type vec(p-root);
             return dot(normal, vec);
         }
     public:
+        const static size_t num_pts = 3;
+
+        Plane(const std::array<point_type, num_pts>& pts) {
+            root = pts.front();
+            const point_type dir0(normalize(pts.at(1)-root));
+            const point_type dir1(normalize(pts.at(2)-root));
+            normal = normalize(cross(dir0, dir1));
+        }
         Plane(const point_type& _root, const point_type& _normal)
         : root(_root), normal(normalize(_normal)) {}
         bool clashing(const point_type& l, const double width) const override {
@@ -95,6 +105,8 @@ namespace shade {
             return fabs(radius-cdist);
         }
     public:
+        const static size_t num_pts = 4;
+
         Cylinder(const point_type& _root, const point_type& _axis, const double _radius)
         : root(_root), axis(normalize(_axis)), radius(_radius) {}
         bool clashing(const point_type& l, const double width) const override {
@@ -133,6 +145,8 @@ namespace shade {
             return fabs(pdist);
         }
     public:
+        const static size_t num_pts = 4;
+        
         Torus(const point_type& _root, const point_type& _axis, const double _radius0, const double _radius1)
         : root(_root), axis(normalize(_axis)), radius0(_radius0), radius1(_radius1) {}
         bool clashing(const point_type& l, const double width) const override {
