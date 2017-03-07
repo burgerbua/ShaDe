@@ -87,7 +87,7 @@ namespace shade {
                     nodes.push_back(nl);
                 }
                 else {
-                    const size_t clevel = level - 1;
+                    const size_t clevel = level + 1;
                     const uint32_t C = 1<<(DEPTH-clevel);
                     for (short o=0; o<8; ++o) {
                         const uint32_t T0l = o&1 ? T0|C : T0;

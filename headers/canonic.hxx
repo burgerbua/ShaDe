@@ -62,6 +62,7 @@ namespace shade {
     class Plane : public Canonic, public Model<point_type, 3>{
         point_type root;
         point_type normal;
+        double r0;
         double compute_distance_measure(const point_type& p) const override {
             const point_type vec(p-root);
             return dot(normal, vec);
@@ -74,22 +75,18 @@ namespace shade {
             const point_type dir0(normalize(pts.at(1)-root));
             const point_type dir1(normalize(pts.at(2)-root));
             normal = normalize(cross(dir0, dir1));
+            r0 = fabs(normal[0]) + fabs(normal[1]) + fabs(normal[2]);
         }
         Plane(const point_type& _root, const point_type& _normal)
         : root(_root), normal(normalize(_normal)) {}
         bool clashing(const point_type& l, const double width) const override {
-            const point_type vecl(l - root);
-            const double dotl = dot(normal, vecl);
-            if (fabs(dotl)>3.0*width*width) {
-                return false;
-            }
-            const point_type h = {{
-                normal[0]*vecl[0]>0.0 ? 0.0 : width,
-                normal[1]*vecl[1]>0.0 ? 0.0 : width,
-                normal[2]*vecl[2]>0.0 ? 0.0 : width}};
-            const point_type vech(l + h - root);
-            const double doth = dot(normal, vech);
-            return dotl*doth<0.0;
+            const double halfwidth = width/2.0;
+            const point_type vecc = {{
+                l[0]+halfwidth - root[0],
+                l[1]+halfwidth - root[1],
+                l[2]+halfwidth - root[2]}};
+            const double dotc = dot(vecc, normal);
+            return dotc<=(r0*halfwidth);
         }
     };
 
