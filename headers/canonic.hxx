@@ -86,7 +86,7 @@ namespace shade {
                 l[1]+halfwidth - root[1],
                 l[2]+halfwidth - root[2]}};
             const double dotc = dot(vecc, normal);
-            return dotc<=(r0*halfwidth);
+            return fabs(dotc)<=(r0*halfwidth);
         }
     };
 

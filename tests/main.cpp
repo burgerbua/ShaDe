@@ -51,5 +51,10 @@ int main(const int argc, const char * argv[])
     std::vector<tree_type::pt_id_type> pt_ids;
     t.clashing_with(p, pt_ids);
     
+    std::set<tree_type::pt_id_type> pt_ids_unique;
+    for (auto i : pt_ids) {
+        pt_ids_unique.insert(i);
+    }
+    
     return 0;
 }
