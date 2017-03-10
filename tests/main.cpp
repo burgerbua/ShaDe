@@ -11,6 +11,15 @@
 #include <vtkOBJReader.h>
 #include <vtkSmartPointer.h>
 template <typename T> using vtkptr = vtkSmartPointer<T>;
+#include <vtkPolyDataMapper.h>
+#include <vtkUnsignedIntArray.h>
+#include <vtkPointData.h>
+#include <vtkActor.h>
+#include <vtkProperty.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkVertexGlyphFilter.h>
 
 #include "ztree.hxx"
 #include "ransac.hxx"
@@ -55,6 +64,46 @@ int main(const int argc, const char * argv[])
     for (auto i : pt_ids) {
         pt_ids_unique.insert(i);
     }
+    
+    vtkptr<vtkPolyData> polydata = vtkptr<vtkPolyData>::New();
+    polydata->SetPoints(points);
+    
+    unsigned char red[3] = {255, 0, 0};
+    unsigned char green[3] = {0, 255, 0};
+    vtkptr<vtkUnsignedCharArray> colors = vtkptr<vtkUnsignedCharArray>::New();
+    colors->SetNumberOfComponents(3);
+    colors->SetName("Colors");
+    for (vtkIdType id=0; id<npoints; ++id) {
+        if (pt_ids_unique.find(id)==pt_ids_unique.end())
+            colors->InsertNextTypedTuple(green);
+        else
+            colors->InsertNextTypedTuple(red);
+    }
+    polydata->GetPointData()->SetScalars(colors);
+
+    vtkptr<vtkVertexGlyphFilter> glyphFilter = vtkptr<vtkVertexGlyphFilter>::New();
+    glyphFilter->SetInputData(polydata);
+    glyphFilter->Update();
+
+    vtkptr<vtkPolyDataMapper> mapper = vtkptr<vtkPolyDataMapper>::New();
+    mapper->SetInputConnection(glyphFilter->GetOutputPort());
+//    mapper->SetInputData(polydata);
+
+    vtkptr<vtkActor> actor = vtkptr<vtkActor>::New();
+    actor->SetMapper(mapper);
+//    actor->GetProperty()->SetPointSize(5);
+    
+    vtkptr<vtkRenderer> renderer = vtkptr<vtkRenderer>::New();
+    vtkptr<vtkRenderWindow> renderWindow = vtkptr<vtkRenderWindow>::New();
+    renderWindow->AddRenderer(renderer);
+    vtkptr<vtkRenderWindowInteractor> renderWindowInteractor = vtkptr<vtkRenderWindowInteractor>::New();
+    renderWindowInteractor->SetRenderWindow(renderWindow);
+    
+    renderer->AddActor(actor);
+//    renderer->SetBackground(.3, .6, .3);
+    
+    renderWindow->Render();
+    renderWindowInteractor->Start();
     
     return 0;
 }
