@@ -15,6 +15,7 @@
 #include <list>
 #include <set>
 #include <vector>
+#include <stack>
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -145,7 +146,7 @@ namespace shade {
         }
         
     public:
-        using pt_id_type = mapped_type::value_type;
+        //using pt_id_type = mapped_type::value_type;
         
         ztree(const std::vector<point_type>& _pts)
         : pts(_pts) {
@@ -241,22 +242,55 @@ namespace shade {
             get_random_points(rpts);
         }
         
-        void clashing_with(const Canonic& c, std::vector<mapped_type::value_type>& pt_ids) const {
-            // find all nodes clashing with c
-            std::vector<bst_type::const_iterator> nodes;
-            const size_t level = 0;
-            bst_type::const_iterator nl = bst.begin();
-            bst_type::const_iterator nh = bst.end();
-            clashing_with(c, nl, nh, level, nodes);
-            // get all point ids from clashing nodes
-            for (auto cn : nodes) {
-                auto nn = std::next(cn);
-                auto end = (nn==std::end(bst)) ? std::end(spts) : nn->second;
-                for (auto it = cn->second; it != end; ++it) {
-                    pt_ids.push_back(*it);
-                }
-            }
-        }
+        //void clashing_with(const Canonic& c, std::vector<mapped_type::value_type>& pt_ids) const {
+        //    // find all nodes clashing with c
+        //    std::vector<bst_type::const_iterator> nodes;
+        //    const size_t level = 0;
+        //    bst_type::const_iterator nl = bst.begin();
+        //    bst_type::const_iterator nh = bst.end();
+        //    clashing_with(c, nl, nh, level, nodes);
+        //    // get all point ids from clashing nodes
+        //    for (auto cn : nodes) {
+        //        auto nn = std::next(cn);
+        //        auto end = (nn==std::end(bst)) ? std::end(spts) : nn->second;
+        //        for (auto it = cn->second; it != end; ++it) {
+        //            pt_ids.push_back(*it);
+        //        }
+        //    }
+        //}
+
+		void clashing_with(const Canonic& c, std::vector<size_t>& pt_ids) const {
+			std::stack<std::pair<uint32_t, int>> todo;
+			todo.emplace(0, 0);
+			while (!todo.empty()) {
+				auto p = todo.top();
+				todo.pop();
+				const int level = p.second;
+				const uint32_t level_mask = 0xffffffff << 3 * (DEPTH - level);
+				const uint32_t m = p.first & level_mask;
+				const double curr_width = width / (1 << level);
+				const point_type l = l2g(m);
+				if (c.clashing(l, curr_width)) {
+					if (level == DEPTH) {
+						auto cn = bst.find(m);
+						if (cn != std::end(bst)) {
+							auto nn = std::next(cn);
+							auto end = (nn == std::end(bst)) ? std::end(spts) : nn->second;
+							for (auto id = cn->second; id != end; ++id)
+								pt_ids.push_back(*id);
+						}
+					}
+					else {
+						const int clevel = level + 1;
+						for (int o = 0; o < 8; ++o) {
+							const uint32_t cm = m | (o << 3 * (DEPTH - clevel));
+							todo.emplace(cm, clevel);
+						}
+					}
+				}
+			}
+		}
+
 
     };
     

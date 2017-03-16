@@ -8,6 +8,8 @@
 
 #include <string>
 
+#include <chrono>
+
 #include <vtkOBJReader.h>
 #include <vtkSmartPointer.h>
 template <typename T> using vtkptr = vtkSmartPointer<T>;
@@ -26,7 +28,7 @@ template <typename T> using vtkptr = vtkSmartPointer<T>;
 
 int main(const int argc, const char * argv[])
 {
-    const std::string filename("/Users/matthias/Documents/STL/OBJ_Kongming_Wooden_Lock.obj");
+    const std::string filename("E:\\dev\\ShaDe\\files\\OBJ_Golfing.obj");
 
     // create reader
     vtkptr<vtkOBJReader> reader = vtkptr<vtkOBJReader>::New();
@@ -46,8 +48,11 @@ int main(const int argc, const char * argv[])
         pts.push_back({{coords[0], coords[1], coords[2]}});
     }
     
-    // build tree
-    const size_t DEPTH = 5;
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now();
+
+	// build tree
+    const size_t DEPTH = 6;
     using tree_type = shade::ztree<DEPTH>;
     tree_type t(pts);
     
@@ -57,14 +62,19 @@ int main(const int argc, const char * argv[])
     shade::Plane p(rpts);
     
     // find points on model
-    std::vector<tree_type::pt_id_type> pt_ids;
+    std::vector<size_t> pt_ids;
     t.clashing_with(p, pt_ids);
     
-    std::set<tree_type::pt_id_type> pt_ids_unique;
+	end = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end - start;
+	std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
+
+    std::set<size_t> pt_ids_unique;
     for (auto i : pt_ids) {
         pt_ids_unique.insert(i);
     }
-    
+	assert(pt_ids.size() == pt_ids_unique.size());
+
     vtkptr<vtkPolyData> polydata = vtkptr<vtkPolyData>::New();
     polydata->SetPoints(points);
     
