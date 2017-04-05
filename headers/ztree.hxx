@@ -68,58 +68,6 @@ namespace shade {
         mapped_type spts;
         bst_type bst;
         
-        void clashing_with(const Canonic& c, const bst_type::const_iterator nl, const bst_type::const_iterator nh, const size_t level, std::vector<bst_type::const_iterator>& nodes) const {
-            uint32_t T0, T1, T2;
-            dec(nl->first, T0, T1, T2);
-            const uint32_t mask = 0xffffffff<<(DEPTH-level);
-            T0 &= mask;
-            T1 &= mask;
-            T2 &= mask;
-            const double t0 = static_cast<double>(T0) / static_cast<double>(MASK);
-            const double t1 = static_cast<double>(T1) / static_cast<double>(MASK);
-            const double t2 = static_cast<double>(T2) / static_cast<double>(MASK);
-            const point_type l = {{
-                width*t0 + center[0] - width/2.0,
-                width*t1 + center[1] - width/2.0,
-                width*t2 + center[2] - width/2.0}};
-            const double curr_width = width / (1<<level);
-            if (c.clashing(l, curr_width)) {
-                if (level==DEPTH) {
-                    nodes.push_back(nl);
-                }
-                else {
-                    const size_t clevel = level + 1;
-                    const uint32_t C = 1<<(DEPTH-clevel);
-                    for (short o=0; o<8; ++o) {
-                        const uint32_t T0l = o&1 ? T0|C : T0;
-                        const uint32_t T1l = o&2 ? T1|C : T1;
-                        const uint32_t T2l = o&4 ? T2|C : T2;
-                        const uint32_t Ml = enc(T0l, T1l, T2l);
-                        auto nlc = std::lower_bound(nl, nh, Ml, [](const bst_type::value_type& n, const uint32_t& _Ml){return n.first<_Ml;});
-                        const uint32_t T0h = T0l|C;
-                        const uint32_t T1h = T1l|C;
-                        const uint32_t T2h = T2l|C;
-                        const uint32_t Mh = enc(T0h, T1h, T2h);
-                        auto nhc = std::upper_bound(nl, nh, Mh, [](const uint32_t& _Mh, const bst_type::value_type& n){return _Mh<n.first;});
-                        clashing_with(c, nlc, nhc, clevel, nodes);
-                    }
-                }
-            }
-        }
-//        void clashing_with_greedy(const Canonic& c, std::vector<bst_type::iterator>& nodes) const {
-//            for (auto it: bst) {
-//                double x, y, z;
-//                dec(it->first, x, y, z);
-//                if (c.clashing({{x, y, z}}, width)) {
-//                    nodes.push_back(it);
-//                }
-//            }
-//        }
-//        void clashing_with(const Canonic& c, std::vector<bst_type::iterator>& nodes) const {
-//            const size_t level = 0;
-//            clashing_with(c, bst.begin(), bst.end(), level, nodes);
-//        }
-        
         uint32_t g2l(const point_type& pt) const
         {
             const double t0 = (pt[0] - center[0]) / width + 0.5;
@@ -146,8 +94,6 @@ namespace shade {
         }
         
     public:
-        //using pt_id_type = mapped_type::value_type;
-        
         ztree(const std::vector<point_type>& _pts)
         : pts(_pts) {
             const double dbl_max = std::numeric_limits<double>::max();
@@ -241,23 +187,6 @@ namespace shade {
             // not enough points found, retry
             get_random_points(rpts);
         }
-        
-        //void clashing_with(const Canonic& c, std::vector<mapped_type::value_type>& pt_ids) const {
-        //    // find all nodes clashing with c
-        //    std::vector<bst_type::const_iterator> nodes;
-        //    const size_t level = 0;
-        //    bst_type::const_iterator nl = bst.begin();
-        //    bst_type::const_iterator nh = bst.end();
-        //    clashing_with(c, nl, nh, level, nodes);
-        //    // get all point ids from clashing nodes
-        //    for (auto cn : nodes) {
-        //        auto nn = std::next(cn);
-        //        auto end = (nn==std::end(bst)) ? std::end(spts) : nn->second;
-        //        for (auto it = cn->second; it != end; ++it) {
-        //            pt_ids.push_back(*it);
-        //        }
-        //    }
-        //}
 
 		void clashing_with(const Canonic& c, std::vector<size_t>& pt_ids) const {
 			std::stack<std::pair<uint32_t, int>> todo;

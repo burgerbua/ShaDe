@@ -26,10 +26,13 @@ template <typename T> using vtkptr = vtkSmartPointer<T>;
 #include "ztree.hxx"
 #include "ransac.hxx"
 
+using namespace shade;
+
 int main(const int argc, const char * argv[])
 {
-    const std::string filename("E:\\dev\\ShaDe\\files\\OBJ_Golfing.obj");
-
+//    const std::string filename("E:\\dev\\ShaDe\\files\\OBJ_Golfing.obj");
+    const std::string filename("/Users/matthias/Code/ShaDe/tests/models/D_396.obj");
+    
     // create reader
     vtkptr<vtkOBJReader> reader = vtkptr<vtkOBJReader>::New();
     reader->SetFileName(filename.c_str());
@@ -37,8 +40,46 @@ int main(const int argc, const char * argv[])
 
     // get points
     vtkptr<vtkPoints> points(reader->GetOutput()->GetPoints());
-    const vtkIdType npoints = points->GetNumberOfPoints();
- 
+    vtkIdType npoints = points->GetNumberOfPoints();
+    printf("num pts %u\n", npoints);
+    
+    const double base_area = 1.0;
+    
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> disr(0, 1);
+    
+    vtkptr<vtkCellArray> polys(reader->GetOutput()->GetPolys());
+    polys->InitTraversal();
+    vtkptr<vtkIdList> ids = vtkptr<vtkIdList>::New();
+    while (polys->GetNextCell(ids)) {
+        assert(ids->GetNumberOfIds()==3);
+        point_type vtxs[3];
+        for (int i=0; i<ids->GetNumberOfIds(); ++i)
+            points->GetPoint(ids->GetId(i), vtxs[i].data());
+        const shade::point_type vec0(vtxs[1]-vtxs[0]);
+        const shade::point_type vec1(vtxs[2]-vtxs[0]);
+        const double area = norm(cross(vec0, vec1));
+//        printf("%f\n", area);
+        if (area>base_area) {
+            const int num = static_cast<int>(area/base_area);
+            for (size_t i=0; i<num; ++i) {
+                const double r[2] = {disr(gen), disr(gen)};
+                const double a = 1.0-sqrt(r[0]);
+                const double b = sqrt(r[0]) * (1.0-r[1]);
+                const double c = sqrt(r[0]) * r[1];
+                const shade::point_type A(vtxs[0] * a);
+                const shade::point_type B(vtxs[1] * b);
+                const shade::point_type C(vtxs[2] * c);
+                const shade::point_type P = A + B + C;
+                points->InsertNextPoint(P.data());
+            }
+        }
+    }
+    
+    npoints = points->GetNumberOfPoints();
+    printf("num pts %u\n", npoints);
+    
     // copy points
     std::vector<shade::point_type> pts;
     pts.reserve(npoints);
